@@ -1,0 +1,316 @@
+<!doctype html>
+<html ng-app="Demo" ng-controller="AppController">
+<head>
+    <meta charset="utf-8" />
+
+    <title>
+        Defer Welcome Message Rendering
+    </title>
+
+    <style>
+		body {
+			font-size: 24px;
+		}
+        .wrapper {
+            z-index : 10;
+            position : absolute;
+            top : 0;
+            left : 100;
+            border: 2px solid darkblue;
+        }
+    </style>
+</head>
+<body>
+
+<h1>
+    EidoSearch Employee List
+</h1>
+
+<table defer-ui-render class="items" style="width: 100%" >
+    <thead>
+        <th width="33%">Id</th>
+        <th width="33%">Name</th>
+        <th width="34%" align="left">Message</th>
+    </thead>
+    <tbody>
+        <tr ng-repeat="friend in friends" class="item">
+            <td width="33%" align="center"><span>{{$index + 1}}</span></td>
+            <td width="33%" align="center"><span class="name">{{ friend.name }}</span></td>
+            <td width="34%">
+                <a ng-click="showChart(friend)" class="showEidoMessage"><span style="color: darkorange">{{friend.message}}</span></a>
+                <div class="eidoWelcomeMessage" ng-show="friend.showChart">
+					<span style="color: darkblue; font-size: 12pt;">
+						<!--<super-fresh who="friend.name"></super-fresh>-->
+                        <super-chart data="friend.chartData"></super-chart>
+					</span>					
+				</div>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+
+<!-- Load jQuery and AngularJS. -->
+<script type="text/javascript" src="http://code.jquery.com/jquery-2.1.3.min.js"></script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.0/angular.min.js"></script>
+<script type="text/javascript" src="http://app.eidosearch.com/js/3rdParty/highcharts/standalone-framework.src.js"></script>
+<script type="text/javascript" src="http://app.eidosearch.com/js/3rdParty/highcharts/highstock.js"></script>
+<script type="text/javascript" src="http://app.eidosearch.com/js/3rdParty/highcharts/highcharts-more.js"></script>
+<script type="text/javascript">
+
+
+    // Create an application module for our demo.
+    var app = angular.module( "Demo", [] );
+
+    // Super Fresh Directive
+	app.run(['$templateCache', function($templateCache) {
+		$templateCache.put('/super-fresh.template.html', "<div class='displayChart'>Show Chart {{ dude }}</div>");
+	}])	
+
+	app.controller('superFreshCtrl', function($scope) {
+		$scope.dude = $scope.who;
+		console.log('I am here');
+	});
+
+	app.directive('superFresh', function () {
+		return {
+			restrict: 'E'
+			, transclude: true
+			, replace: true
+			, scope: {
+				who: '='
+			}
+			, controller: 'superFreshCtrl'
+			, templateUrl: '/super-fresh.template.html'
+		 };
+	});
+
+    // HighChart Directive
+    app.directive('superChart', function() {
+        return {
+            restrict: 'E',
+            replace: true,
+            template: '<div class="wrapper"></div>',
+            scope: {
+                data: "="
+            },
+            link: function ($scope, element, attrs) {
+                var chart_height = 250;
+                var chart_width = 300;
+                var renderChart = function(data){
+                    var config = {
+                        chart: {
+                            renderTo: element[0],
+                            height: chart_height,
+                            width: chart_width
+                        },
+
+                        xAxis: {
+                            categories: ['1', '2', '3', '4', '5', '6',
+                                '7', '8', '9', '10', '11', '12']
+                        },
+                        yAxis: {
+
+                            title: null
+                        },
+                        title: null,
+                        legend: {
+                            enabled: false
+                        },
+                        credits: {
+                            enabled: false
+                        },
+                        series: [
+                            {
+                                data: $scope.data
+                            }
+                        ]
+                    };
+                    new Highcharts.Chart(config);
+                };
+                $scope.$watch("data", function(data){
+                    if(data){
+                        renderChart();
+                    }
+                }, true);
+
+            }
+        }
+    });
+
+
+    // -------------------------------------------------- //
+    // -------------------------------------------------- //
+
+
+    // Define the root-level controller for the application.
+    app.controller(
+            "AppController",
+            function( $scope ) {
+
+                // Build up a large list of friends.
+                $scope.friends = buildFriends( 1000 );
+
+
+                // ---
+                // PUBLIC METHODS.
+                // ---
+
+                // I show the delete confirmation for the given friend.
+                $scope.showConfirmation = function( friend ) {
+
+                    // Convert the name to uppecase so we can see the
+                    // change reflected in both the item and the
+                    // delete confirmation overlay.
+                    friend.name = friend.name.toUpperCase();
+
+                    friend.isShowingWelcomeMessage = true;
+
+                };
+
+                $scope.showChart = function(friend){
+                    var ifClickOnItself = false;
+                    var IndexOfVisibleChart = -1;
+                    for(var i = 0; i < $scope.friends.length; i++){
+                        if($scope.friends[i].id === friend.id && $scope.friends[i].showChart){
+                            ifClickOnItself = true;
+                            break;
+                        }
+                        if($scope.friends[i].showChart){
+                            IndexOfVisibleChart = i;
+                        }
+                    }
+                    if(!ifClickOnItself && IndexOfVisibleChart > -1){
+                        $scope.friends[IndexOfVisibleChart].showChart = false;
+                        $scope.friends[IndexOfVisibleChart].message = "Show";
+                    }
+
+                    friend.showChart = !friend.showChart;
+                    friend.message = friend.showChart ? "Hide" : "Show";
+                }
+
+
+                // I build a collection of friends with the given size.
+                function buildFriends( count ) {
+
+                    var names = [ "Tim", "Luan", "Junfeng", "Todd", "Triloke", "Haibei", "Andrej"];
+                    var friends = [];
+
+                    for ( var i = 0 ; i < count ; i++ ) {
+
+                        friends.push({
+                            id: i,
+                            name: names[ i % 7 ],
+                            isShowingWelcomeMessage: false,
+                            chartData: [29.9, 71.5, 106.4, 129.2, 144.0, 176.0, 135.6, 148.5, 216.4, 194.1, 95.6, 54.4],
+                            showChart: false,
+                            message: "Show"
+                        });
+
+                    }
+
+                    return( friends );
+
+                }
+
+            }
+    );
+
+    // I help the rendering of the DOM tree such that it can
+    // delay the linking of parts of the DOM tree that are not
+    // often used.
+    app.directive(
+            "deferUiRender",
+            function( $compile ) {
+
+                // I compile the DOM template.
+                function compile( tElement, tAttributes ) {
+
+                    // When prepareing the template for the list, we
+                    // want to extract the "welcome message" div
+                    // since it's not going to be used very often.
+                    var tOverlay = tElement.find( "div.eidoWelcomeMessage" ).remove(); // remember: the div is removed from DOM but the reference is pointed to tOverlay
+
+                    // Now that we've extracted the overlay, we need
+                    // to compile it separeately so that it can be
+                    // transcluded an linked separately.
+                    var transcludeOverlay = $compile(tOverlay);
+
+
+                    // I bind the UI to the scope.
+                    function link($scope, element, attributes ) {
+                        var displayChartDiv = function(parentEle){
+                            // hide all
+                            angular.element(".wrapper").hide();
+                            // show current one
+                            var chartDivEle = parentEle.find('.wrapper');
+                            var chart_height = 250;
+                            var chart_width = 300;
+                            var wrapper_left = parentEle.position().left - chart_width;
+                            var wrapper_top = parentEle.position().top - chart_height/2;
+                            chartDivEle.css('left', wrapper_left + 'px');
+                            chartDivEle.css('top', wrapper_top + 'px');
+                            chartDivEle.show();
+                        }
+
+                        // listen on mousedown event
+                        element.on(
+                            "mousedown",
+                            "td a.showEidoMessage",
+                            function(event) {
+
+                                var parentEle = angular.element(this).parent();
+
+                                var localScope = parentEle.scope();
+
+                                // Check to see if the item has already
+                                // been injected. If so, ignore click.
+                                if ( localScope.hasOwnProperty( "__injected" ) ) {
+                                    displayChartDiv(parentEle);
+                                    return;
+                                }
+
+                                // alias: $compile(tOverlay)(localScope, cloneAttachFn(tOverlayClone, localScopeReference))
+                                // the tOverlay reference would not point to the clone
+                                // we have to access the tOverlay (clone) via the cloneAttachFn
+                                // more details - https://docs.angularjs.org/api/ng/service/$compile
+                                transcludeOverlay(
+                                        localScope,
+                                        function( overlayClone, $scope ) {
+
+                                            // attach the clone to the parent element
+                                            parentEle.append( overlayClone );
+                                            displayChartDiv(parentEle);
+                                            $scope.__injected = true;
+
+                                        }
+                                );
+
+                                // Trigger a $digest so all the watchers
+                                // within the injected DOM tree know to
+                                // initialize their bindings.
+                                localScope.$apply();
+
+                            }
+                        );
+
+                    }
+
+                    return( link );
+
+                }
+
+
+                // Return the directive configuration.
+                return({
+                    compile: compile
+                });
+
+            }
+    );
+
+
+</script>
+
+</body>
+</html>
