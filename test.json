@@ -1,0 +1,109 @@
+{
+
+	"openapi": "3.0.1",
+
+	"info": {
+
+		"title": "MyDiscovery Compass Client API",
+
+		"version": "v0"
+
+	},
+
+	"servers": [
+
+		{
+
+			"url": "http://localhost:8080",
+
+			"description": "Generated server url"
+
+		}
+
+	],
+
+	"paths": {
+
+		"/event": {
+
+			"post": {
+
+				"tags": [
+
+					"event-controller"
+
+				],
+
+				"operationId": "get",
+
+				"requestBody": {
+
+					"content": {
+
+						"application/json": {
+
+							"schema": {
+
+								"$ref": "#/components/schemas/NPPEvent"
+
+							}
+
+						}
+
+					},
+
+					"required": true
+
+				},
+
+				"responses": {
+
+					"200": {
+
+						"description": "OK",
+
+						"content": {
+
+							"application/json": {
+
+								"schema": {
+
+									"type": "object",
+
+									"additionalProperties": {
+
+										"type": "object"
+
+									}
+
+								}
+
+							}
+
+						}
+
+					}
+
+				}
+
+			}
+
+		}
+
+	},
+
+	"components": {
+
+		"schemas": {
+
+			"NPPEvent": {
+
+				"type": "object"
+
+			}
+
+		}
+
+	}
+
+}
